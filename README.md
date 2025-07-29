@@ -1,11 +1,3 @@
-Of course. I will integrate the specified diagrams into your README to provide excellent visual context for the architecture and data flows.
-
-I'll place the `High-Level Architecture Diagram.png` in the "How It Works" section to give a bird's-eye view, and the `Sequence-Diagram.png` in the "Behind the Scenes" section to visually support the detailed file-by-file breakdown.
-
-Here is the updated `README.md` with the diagrams included:
-
----
-
 # RAG Chat Application API: Your Smart Document & Web Information Service
 
 This project provides a powerful backend API for interacting with information from websites and PDF documents. It allows other applications to ingest content, generate frequently asked questions, and get intelligent answers to user queries, all through simple API calls.
