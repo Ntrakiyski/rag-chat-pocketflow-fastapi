@@ -1,0 +1,25 @@
+# filename: requirements.txt
+
+# Core FastAPI and Server
+fastapi
+uvicorn[standard]
+
+# Background Tasks
+celery
+redis
+
+# PocketFlow Engine
+pocketflow>=0.0.1
+qdrant-client
+
+# Data Processing & External Services
+llama-index
+pypdf
+firecrawl
+redis
+python-dotenv
+python-multipart
+
+pydantic>=2.0
+
+certifi

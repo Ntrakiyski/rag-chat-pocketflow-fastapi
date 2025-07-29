@@ -1,0 +1,63 @@
+### Test 1: Basic API Connectivity
+GET http://localhost:8000/
+
+### Test 2: Ingest a Website (Asynchronous)
+# NOW USING multipart/form-data FOR WEBSITE INGESTION
+POST http://localhost:8000/api/v1/ingest
+Content-Type: multipart/form-data; boundary=WebAppBoundary
+
+--WebAppBoundary
+Content-Disposition: form-data; name="input_type"
+
+website
+--WebAppBoundary
+Content-Disposition: form-data; name="web_url"
+
+https://www.superdesign.dev/
+--WebAppBoundary--
+
+### Test 3: Check Ingestion Status (Poll until Ready)
+# Replace {{ingestWebsiteSessionId}} with the actual session_id from Test 2's response
+GET http://localhost:8000/api/v1/ingest/status/7a30c623-4315-444e-9d47-d7fc9a349d73
+
+### Test 4: Ingest a PDF File (Asynchronous)
+# Ensure 'files/cv.pdf' exists in your project root, or update the path.
+POST http://localhost:8000/api/v1/ingest
+Content-Type: multipart/form-data; boundary=WebAppBoundary
+
+--WebAppBoundary
+Content-Disposition: form-data; name="input_type"
+
+pdf
+--WebAppBoundary
+Content-Disposition: form-data; name="pdf_file"; filename="cv.pdf"
+Content-Type: application/pdf
+
+< ./files/cv.pdf
+--WebAppBoundary--
+
+### Test 5: Chat with Content (Synchronous)
+# Replace {{chatSessionId}} with a session_id that is confirmed "ready" from Test 3 or 4.
+POST http://localhost:8000/api/v1/chat/7a30c623-4315-444e-9d47-d7fc9a349d73
+Content-Type: application/json
+
+{
+  "question": "what to use for superdesign?"
+}
+
+### Test 6: Generate FAQs (Asynchronous)
+# Replace {{faqSessionId}} with a session_id that is confirmed "ready".
+POST http://localhost:8000/api/v1/faq/generate/7a30c623-4315-444e-9d47-d7fc9a349d73
+
+### Test 7: Get Full Session Data (Debugging/Admin)
+# Replace {{getSessionId}} with any session_id you've used.
+GET http://localhost:8000/api/v1/session/7a30c623-4315-444e-9d47-d7fc9a349d73
+
+### Test 8: Update Session Data (Admin)
+# Replace {{updateSessionId}} with any session_id.
+PUT http://localhost:8000/api/v1/session/{{updateSessionId}}
+Content-Type: application/json
+
+{
+  "chat_history": []
+}

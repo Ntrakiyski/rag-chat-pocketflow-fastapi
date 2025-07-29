@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  # The FastAPI API Server
+  api:
+    build: .
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000
+    ports:
+      - "7614:8000"
+    environment:
+      - PYTHONUNBUFFERED=1
+    depends_on:
+      - worker
+
+  # The Celery Background Worker
+  worker:
+    build: .
+    command: celery -A app.workers.tasks worker --loglevel=info --pool=prefork
+    environment:
+      - PYTHONUNBUFFERED=1
