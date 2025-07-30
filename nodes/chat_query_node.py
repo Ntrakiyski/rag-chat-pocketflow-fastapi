@@ -1,10 +1,10 @@
 # filename: nodes/chat_query_node.py
 
 import datetime
-import logging # Added for logging within the node
+import logging  # Added for logging within the node
 
 # Import utilities from your central 'utils' folder
-from utils.rag_query_engine import query_content as query_vector_db # Renamed for clarity
+from utils.rag_query_engine import query_content as query_vector_db
 from utils.web_search import web_search
 from utils.call_llm import call_llm
 
@@ -12,9 +12,11 @@ from utils.call_llm import call_llm
 from pocketflow import Node
 
 # Import new session management from app.core
-from app.core.session import get_session, update_session # Corrected imports
+from app.core.session import get_session, update_session  # Corrected imports
 
-logger = logging.getLogger(__name__) # Initialize logger for this node
+
+logger = logging.getLogger(__name__)  # Initialize logger for this node
+
 
 class ChatQueryNode(Node):
     def prep(self, shared: dict):
@@ -28,14 +30,19 @@ class ChatQueryNode(Node):
         user_session_id = shared.get("user_session_id")
 
         if not user_query:
-            logger.warning(f"ChatQueryNode: No user query found in shared data for session {user_session_id}.")
-            return (None, None, "exit", True) # Treat as exit or error if no query
+            logger.warning(
+                f"ChatQueryNode: No user query found in shared data "
+                f"for session {user_session_id}."
+            )
+            return (None, None, "exit", True)  # Treat as exit or error if no query
 
         # Load the most current session data from Redis
         session_obj = get_session(user_session_id)
         if not session_obj:
-            logger.error(f"ChatQueryNode: Session {user_session_id} not found in Redis.")
-            return (user_query, [], user_session_id, True) # Proceed as contextless chat if session missing
+            logger.error(
+                f"ChatQueryNode: Session {user_session_id} not found in Redis."
+            )
+            return (user_query, [], user_session_id, True)  # Proceed as contextless chat if session missing
 
         # Initialize chat_history from session_obj, ensuring it's a list
         chat_history = session_obj.chat_history if session_obj.chat_history is not None else []
@@ -53,10 +60,14 @@ class ChatQueryNode(Node):
         # Determine if chat should be contextless
         contextless_chat = not context_is_ready
 
-        logger.info(f"ChatQueryNode: Prepared for session {user_session_id}. Context ready: {context_is_ready}")
+        logger.info(
+            f"ChatQueryNode: Prepared for session "
+            f"{user_session_id}. Context ready: "
+            f"{context_is_ready}"
+        )
         return (user_query, chat_history, user_session_id, contextless_chat)
 
-    def exec(self, prep_res: tuple) -> tuple:
+    def exec(self, prep_res: tuple, shared: dict) -> tuple:
         """
         Executes the core logic: querying content or LLM, with automated fallback.
         """
@@ -65,7 +76,26 @@ class ChatQueryNode(Node):
         if user_query is None or user_query.lower() == 'exit':
             return (None, None, "exit")
 
-        logger.info(f"🤖 Assistant is thinking for session {user_session_id}...")
+        # Validate model first (if specified)
+        if shared.get("model"):
+            try:
+                # Test model validity by making a dummy call
+                call_llm(
+                    [{"role": "system", "content": "test"}],
+                    shared["model"]
+                )
+            except Exception as e:
+                if "Invalid model" in str(e):
+                    return (
+                        f"Invalid model specified: {shared['model']}",
+                        [],
+                        "invalid_model"
+                    )
+                raise
+
+        logger.info(
+            f"🤖 Assistant is thinking for session {user_session_id}..."
+        )
         answer = ""
         resources = []
         action = "default" # Default action is to continue chat
@@ -73,12 +103,22 @@ class ChatQueryNode(Node):
         if contextless_chat:
             logger.info("  Querying LLM directly (contextless chat)...")
             try:
-                # Call LLM with the full chat history for context
-                answer = call_llm(chat_history)
+                # Call LLM with the full chat history and optional model
+                answer = call_llm(
+                    chat_history,
+                    model=shared.get("model")
+                )
             except Exception as e:
-                answer = f"Error calling LLM directly: {e}"
-                action = "error"
-                logger.error(f"Error in direct LLM call for session {user_session_id}: {e}", exc_info=True)
+                if "Invalid model" in str(e) or "not found" in str(e):
+                    # This is a model validation error from OpenRouter
+                    answer = f"Invalid model specified: {shared.get('model')}. Please check the model name. Available models can be found at https://openrouter.ai/models"
+                    action = "invalid_model"
+                    shared["error_message"] = answer  # Store detailed error for API response
+                else:
+                    answer = f"Error calling LLM: {e}"
+                    action = "error"
+                    shared["error_message"] = answer
+                logger.error(f"Error in LLM call for session {user_session_id}: {e}", exc_info=True)
         else:
             logger.info("  Querying content from vector store...")
             try:
@@ -100,8 +140,11 @@ class ChatQueryNode(Node):
                         logger.info(f"  Web search successful for session {user_session_id}.")
                     else:
                         logger.info(f"  Web search yielded no results for session {user_session_id}. Falling back to general LLM chat.")
-                        # Fallback to general LLM chat if web search also fails
-                        answer = call_llm(chat_history)
+                        # Fallback to general LLM chat if web search fails
+                        answer = call_llm(
+                            chat_history,
+                            model=shared.get("model")
+                        )
                 except Exception as e:
                     logger.error(f"Error during web search or fallback LLM call for session {user_session_id}: {e}", exc_info=True)
                     answer = f"I'm sorry, I encountered an error and couldn't find an answer."
@@ -109,7 +152,10 @@ class ChatQueryNode(Node):
             else:
                 logger.info(f"  Answer found in vector store for session {user_session_id}.")
 
-        logger.info(f"🤖 Assistant response for session {user_session_id}: {answer[:100]}...") # Log first 100 chars
+        logger.info(
+            f"🤖 Assistant response for session {user_session_id}: "
+            f"{answer[:100]}..."  # Log first 100 chars
+        )
         return (answer, resources, action)
 
     def post(self, shared: dict, prep_res: tuple, exec_res: tuple) -> str:

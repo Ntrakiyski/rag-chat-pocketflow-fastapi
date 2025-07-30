@@ -38,11 +38,12 @@ Content-Type: application/pdf
 
 ### Test 5: Chat with Content (Synchronous)
 # Replace {{chatSessionId}} with a session_id that is confirmed "ready" from Test 3 or 4.
-POST http://localhost:8000/api/v1/chat/7a30c623-4315-444e-9d47-d7fc9a349d73
+POST http://localhost:8000/api/v1/chat/79cc1dfe-8f4a-480b-a24b-3f767270b603
 Content-Type: application/json
 
 {
-  "question": "what to use for superdesign?"
+  "question": "what?",
+  "model": "google/gemini-2.5-flashzzz"
 }
 
 ### Test 6: Generate FAQs (Asynchronous)

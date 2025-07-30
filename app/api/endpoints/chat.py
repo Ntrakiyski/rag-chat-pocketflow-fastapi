@@ -7,9 +7,19 @@ from nodes.chat_query_node import ChatQueryNode
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
-@router.post("/chat/{session_id}", response_model=ChatResponse, status_code=status.HTTP_200_OK)
-async def chat_with_content(session_id: str, request: ChatRequest = Body(...)):
-    logger.info(f"Received chat request for session: {session_id} with question: '{request.question}'")
+@router.post(
+    "/chat/{session_id}", 
+    response_model=ChatResponse, 
+    status_code=status.HTTP_200_OK
+)
+async def chat_with_content(
+    session_id: str, 
+    request: ChatRequest = Body(...)
+):
+    logger.info(
+        f"Received chat request for session: {session_id} "
+        f"with question: '{request.question}'"
+    )
 
     session_obj: SessionData = get_session(session_id)
     if not session_obj:
@@ -24,25 +34,44 @@ async def chat_with_content(session_id: str, request: ChatRequest = Body(...)):
 
     shared_data_for_node = session_obj.model_dump()
     shared_data_for_node["user_query"] = request.question
+    shared_data_for_node["model"] = request.model
 
     try:
         prep_res = chat_node.prep(shared_data_for_node)
         
-        answer, resources, action = chat_node.exec(prep_res)
+        answer, resources, action = chat_node.exec(prep_res, shared_data_for_node)
         
         post_action = chat_node.post(shared_data_for_node, prep_res, (answer, resources, action))
 
         if post_action == "error":
-            error_message = shared_data_for_node.get("error_message", "An unknown error occurred during chat processing.")
+            error_message = shared_data_for_node.get(
+                "error_message", 
+                "An unknown error occurred during chat processing."
+            )
             logger.error(f"Chat node returned error for session {session_id}: {error_message}")
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=error_message)
+        
+        if post_action == "invalid_model":
+            error_message = shared_data_for_node.get(
+                "error_message",
+                "Invalid model specified."
+            )
+            logger.error(f"Chat node returned invalid model error for session {session_id}: {error_message}")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=error_message
+            )
         
         if post_action == "exit":
             logger.info(f"Chat node requested exit for session {session_id}.")
             pass
 
     except Exception as e:
-        logger.error(f"Unexpected error during chat processing for session {session_id}: {e}", exc_info=True)
+        logger.error(
+            f"Unexpected error during chat processing for "
+            f"session {session_id}: {e}", 
+            exc_info=True
+        )
         update_session(session_id, {"status": "error", "message": f"An unexpected server error occurred: {e}"})
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

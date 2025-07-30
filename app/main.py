@@ -1,7 +1,7 @@
 # filename: app/main.py
 
 from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware # NEW IMPORT
+from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import PROJECT_NAME, PROJECT_VERSION, PROJECT_DESCRIPTION, API_V1_STR
 from app.api.endpoints import ingest, chat, faq, session
 

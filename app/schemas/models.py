@@ -3,27 +3,38 @@
 from pydantic import BaseModel, Field
 from typing import List, Dict, Any, Literal
 
+
 class IngestResponse(BaseModel):
     session_id: str
     status: str
     message: str
+
 
 class StatusResponse(BaseModel):
     session_id: str
     status: Literal["processing", "faq_processing", "ready", "error"]
     message: str
 
+
 class ChatRequest(BaseModel):
-    question: str = Field(..., examples=["What is the main topic of the document?"])
+    question: str = Field(
+        ..., examples=["What is the main topic of the document?"]
+    )
+    model: str | None = Field(
+        None, examples=["google/gemini-2.0-flash-001"]
+    )
+
 
 class ChatResponse(BaseModel):
     answer: str
     resources: List[Dict[str, Any]]
 
+
 class FAQGenerationResponse(BaseModel):
     session_id: str
     status: str
     message: str
+
 
 class SessionData(BaseModel):
     user_session_id: str
@@ -38,5 +49,7 @@ class SessionData(BaseModel):
     context_is_ready: bool = False
     active_namespaces: List[str] = []
     
-    status: Literal["processing", "faq_processing", "ready", "error"] = "processing"
+    status: Literal[
+        "processing", "faq_processing", "ready", "error"
+    ] = "processing"
     message: str = "Session initialized."
