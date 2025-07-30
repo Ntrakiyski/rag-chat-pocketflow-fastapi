@@ -9,6 +9,7 @@ services:
       - "7614:8000"
     environment:
       - PYTHONUNBUFFERED=1
+      - TZ=UTC
     depends_on:
       - worker
 
@@ -18,3 +19,4 @@ services:
     command: celery -A app.workers.tasks worker --loglevel=info --pool=prefork
     environment:
       - PYTHONUNBUFFERED=1
+      - TZ=UTC
