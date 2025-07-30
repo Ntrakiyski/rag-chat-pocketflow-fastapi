@@ -38,17 +38,17 @@ Content-Type: application/pdf
 
 ### Test 5: Chat with Content (Synchronous)
 # Replace {{chatSessionId}} with a session_id that is confirmed "ready" from Test 3 or 4.
-POST http://localhost:8000/api/v1/chat/79cc1dfe-8f4a-480b-a24b-3f767270b603
+POST http://localhost:8000/api/v1/chat/8b638589-36dd-4fd6-993f-de6cdcb6ca98
 Content-Type: application/json
 
 {
-  "question": "what?",
-  "model": "google/gemini-2.5-flashzzz"
+  "question": "what is this?",
+  "model": "google/gemini-2.5-flash"
 }
 
 ### Test 6: Generate FAQs (Asynchronous)
 # Replace {{faqSessionId}} with a session_id that is confirmed "ready".
-POST http://localhost:8000/api/v1/faq/generate/7a30c623-4315-444e-9d47-d7fc9a349d73
+POST http://localhost:8000/api/v1/faq/generate/44cb51a3-a53f-4152-8d6e-b8fd9935b4e7
 
 ### Test 7: Get Full Session Data (Debugging/Admin)
 # Replace {{getSessionId}} with any session_id you've used.
